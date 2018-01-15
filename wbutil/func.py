@@ -42,10 +42,13 @@ def starcompose(*funcs: Iterable[_NAryFunc]) -> _NAryFunc:
     order from left to right (first to last). All supplied frunctions must =
     return an iterable and accept *args.
 
-    >>> ...
-    >>> remote_host = ('example.com', 443)
+    >>> switch = lambda a, b: (b, a)
+    >>> tup2str = lambda a, b: (str(a), str(b))
+    >>> switchandstr = starcompose(switch, tup2str)
+    >>> switchandstr(1, 2)
+    ('2', '1')
     '''
-    return lambda *args: reduce(lambda *acc, f: f(*acc), funcs, *args)
+    return lambda *args: reduce(lambda acc, f: f(*acc), funcs, args)
 
 
 class smartcompose(object):
