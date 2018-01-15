@@ -23,7 +23,7 @@ _UnaryFunc = Callable[[Any], Any]
 _NAryFunc = Callable[[Iterable[Any]], Iterable[Any]]
 
 
-def compose(*funcs: Iterable[_UnaryFunc]) -> _UnaryFunc:
+class compose(object):
     '''
     Returns a function which calls the argument functions in order from left
     to right (first to last). Undefined behavior for non-unary functions.
@@ -33,7 +33,18 @@ def compose(*funcs: Iterable[_UnaryFunc]) -> _UnaryFunc:
     >>> times2tostr(10)
     '20'
     '''
-    return lambda arg: reduce(lambda acc, f: f(acc), funcs, arg)
+
+    def __init__(self, *funcs: Iterable[_UnaryFunc]) -> None:
+        self.funcs = funcs
+
+    def __call__(self, arg: Any) -> Any:
+        '''Invoke the composed pipeline with the specified argument.'''
+        return reduce(lambda acc, f: f(acc), self.funcs, arg)
+
+    def __reversed__(self) -> 'compose':
+        '''Gives a composition with the calling order reversed.'''
+        funcs = tuple(reversed(self.funcs))
+        return type(self)(*funcs)
 
 
 def starcompose(*funcs: Iterable[_NAryFunc]) -> _NAryFunc:
@@ -51,7 +62,7 @@ def starcompose(*funcs: Iterable[_NAryFunc]) -> _NAryFunc:
     return lambda *args: reduce(lambda acc, f: f(*acc), funcs, args)
 
 
-class smartcompose(object):
+class smartcompose(compose):
     '''
     Represents the composition of a list of functions, appied in order from
     left to right. Uses inspection to determine whether to use a regular or
@@ -61,9 +72,6 @@ class smartcompose(object):
     TODO: complete example
     '''
 
-    def __init__(self, *funcs):
-        self._funcs = funcs
-
     def __call__(self, *args):
         acc = args
         for f in self._funcs:
@@ -71,6 +79,7 @@ class smartcompose(object):
             from pdb import set_trace
             set_trace()
             acc = f(acc)
+        return acc
 
 
 class partialright(partial):
