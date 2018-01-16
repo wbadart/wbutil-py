@@ -10,14 +10,16 @@ created: JAN 2018
 '''
 
 from functools import partial, reduce
+from inspect import signature
 from itertools import chain
 from typing import Any, Callable, Iterable
 
-__all__ = ['compose',
-           'partialright',
-           'starcompose',
-           'smartcompose',
-           ]
+__all__ = [
+    'compose',
+    'partialright',
+    'starcompose',
+    'smartcompose',
+]
 
 _UnaryFunc = Callable[[Any], Any]
 _NAryFunc = Callable[[Iterable[Any]], Iterable[Any]]
@@ -34,7 +36,7 @@ class compose(object):
     '20'
     '''
 
-    def __init__(self, *funcs: Iterable[_UnaryFunc]) -> None:
+    def __init__(self, *funcs: _UnaryFunc) -> None:
         self.funcs = funcs
 
     def __call__(self, arg: Any) -> Any:
@@ -42,12 +44,15 @@ class compose(object):
         return reduce(lambda acc, f: f(acc), self.funcs, arg)
 
     def __reversed__(self) -> 'compose':
-        '''Gives a composition with the calling order reversed.'''
+        '''
+        Gives a composition with the calling order reversed. Allows compose to
+        emulate traditional compositional ordering.
+        '''
         funcs = tuple(reversed(self.funcs))
         return type(self)(*funcs)
 
 
-def starcompose(*funcs: Iterable[_NAryFunc]) -> _NAryFunc:
+class starcompose(compose):
     '''
     Returns a function of *args that applies the argument functions in
     order from left to right (first to last). All supplied frunctions must =
@@ -59,11 +64,20 @@ def starcompose(*funcs: Iterable[_NAryFunc]) -> _NAryFunc:
     >>> switchandstr(1, 2)
     ('2', '1')
     '''
-    return lambda *args: reduce(lambda acc, f: f(*acc), funcs, args)
+
+    # Overridden to annotate n-ary function support
+    def __init__(self, *funcs: _NAryFunc) -> None:
+        super().__init__(*funcs)
+
+    def __call__(self, *args: Any) -> Any:
+        '''Invoke the composed pipeline with unpacking.'''
+        return reduce(lambda acc, f: f(*acc), self.funcs, args)
 
 
 class smartcompose(compose):
     '''
+    WIP
+
     Represents the composition of a list of functions, appied in order from
     left to right. Uses inspection to determine whether to use a regular or
     unpacked application.
@@ -72,13 +86,26 @@ class smartcompose(compose):
     TODO: complete example
     '''
 
-    def __call__(self, *args):
+    # Overridden to annotate support for any function
+    def __init__(self, *funcs: Callable) -> None:
+        super().__init__(*funcs)
+
+    def __call__(self, *args: Any) -> Any:
+        '''
+        Invoke the pipeline, deciding at each step whether to unpack arguments.
+        '''
         acc = args
-        for f in self._funcs:
-            print(f)
-            from pdb import set_trace
-            set_trace()
-            acc = f(acc)
+        for f in self.funcs:
+            try:
+                sig = signature(f)
+            except ValueError:
+                continue
+            if len(sig.parameters) == 0:
+                acc = f()
+            elif len(sig.parameters) == 1:
+                acc = f(acc)
+            else:
+                acc = f(*acc)
         return acc
 
 
@@ -93,7 +120,9 @@ class partialright(partial):
     ['1', '2', '3', '4']
     '''
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         '''Call self as a function.'''
-        all_args = chain(args, reversed(self.args))
-        return self.func(*all_args, **kwargs)
+        pos_args = chain(args, reversed(self.args))
+        keywords = self.keywords.copy()
+        keywords.update(kwargs)
+        return self.func(*pos_args, **keywords)
