@@ -13,7 +13,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='wbutil',
-      version='0.0.1a0',
+      version='0.0.2a0',
       packages=find_packages(),
       url='https://github.com/wbadart/wbutil-py',
 
