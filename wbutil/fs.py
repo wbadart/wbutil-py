@@ -9,10 +9,10 @@ Will Badart <wbadart@live.com>
 created: JAN 2018
 '''
 
-from typing import Callable
+from typing import Any, Callable, TextIO
 
 
-def saveobj(constructor: Callable, path: str):
+def saveobj(constructor: Callable[[], Any], path: str) -> Any:
     '''
     Construct an object and save it to the disk for later use. Useful for
     objects with expensive constructors such as ones that include Web requests
@@ -33,3 +33,27 @@ def saveobj(constructor: Callable, path: str):
         with open(path, 'rb') as fs:
             obj = load(fs)
     return obj
+
+
+def try_open(
+        path: str,
+        process: Callable[[TextIO], Any]=lambda fs: fs.read(),
+        default: Any=None) -> Any:
+    '''
+    Attempt to open the file at `path`, process it, and close it. If file
+    cannot be loaded, the default value is returned. Does not swallow errors
+    from the processing function.
+
+    >>> from json import load
+    >>> data = try_open('data.json', process=load, default={})
+    >>> data
+    {'my': 'data'}
+    >>> description = try_open('doesnt_exist.txt', default='No description')
+    >>> description
+    'No description'
+    '''
+    try:
+        with open(path, 'r') as fs:
+            return process(fs)
+    except OSError:
+        return default
