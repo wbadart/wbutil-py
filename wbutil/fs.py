@@ -9,7 +9,12 @@ Will Badart <wbadart@live.com>
 created: JAN 2018
 '''
 
-from typing import Any, Callable, TextIO
+from typing import Any, Callable, TextIO, TypeVar
+
+__all__ = [
+    'saveobj',
+    'try_open',
+]
 
 
 def saveobj(constructor: Callable[[], Any], path: str) -> Any:
@@ -35,10 +40,13 @@ def saveobj(constructor: Callable[[], Any], path: str) -> Any:
     return obj
 
 
+_ProcessReturn_t = TypeVar('_ProcessReturn_t')
+
+
 def try_open(
         path: str,
-        process: Callable[[TextIO], Any]=lambda fs: fs.read(),
-        default: Any=None) -> Any:
+        process: Callable[[TextIO], _ProcessReturn_t]=lambda fs: fs.read(),
+        default: Any=None) -> _ProcessReturn_t:
     '''
     Attempt to open the file at `path`, process it, and close it. If file
     cannot be loaded, the default value is returned. Does not swallow errors
