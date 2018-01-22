@@ -13,7 +13,7 @@ from typing import Any, Callable, TextIO, TypeVar
 
 __all__ = [
     'saveobj',
-    'try_open',
+    'tryopen',
 ]
 
 
@@ -43,7 +43,7 @@ def saveobj(constructor: Callable[[], Any], path: str) -> Any:
 _ProcessReturn_t = TypeVar('_ProcessReturn_t')
 
 
-def try_open(
+def tryopen(
         path: str,
         process: Callable[[TextIO], _ProcessReturn_t]=lambda fs: fs.read(),
         default: Any=None) -> _ProcessReturn_t:
