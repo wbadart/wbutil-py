@@ -41,7 +41,7 @@ class Queue(StdQueue):
             self._threads[i].start()
         return self
 
-    def __exit__(self, exception_t, exception, traceback):
+    def __exit__(self, exception_t=Exception, exception=None, traceback=None):
         '''Stop and join the threads.'''
         for i in range(self._nthreads):
             self.put((0, None))

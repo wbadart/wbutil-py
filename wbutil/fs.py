@@ -9,7 +9,9 @@ Will Badart <wbadart@live.com>
 created: JAN 2018
 '''
 
-from typing import Any, Callable, TextIO, TypeVar
+from os.path import exists
+from pickle import dump, load
+from typing import Any, Callable, TextIO
 
 __all__ = [
     'saveobj',
@@ -28,8 +30,6 @@ def saveobj(constructor: Callable[[], Any], path: str) -> Any:
     >>> req
     <Response [200]>
     '''
-    from os.path import exists
-    from pickle import dump, load
     if not exists(path):
         obj = constructor()
         with open(path, 'wb') as fs:
@@ -40,13 +40,10 @@ def saveobj(constructor: Callable[[], Any], path: str) -> Any:
     return obj
 
 
-_ProcessReturn_t = TypeVar('_ProcessReturn_t')
-
-
 def tryopen(
         path: str,
-        process: Callable[[TextIO], _ProcessReturn_t]=lambda fs: fs.read(),
-        default: Any=None) -> _ProcessReturn_t:
+        process: Callable[[TextIO], Any]=lambda fs: fs.read(),
+        default: Any=None) -> Any:
     '''
     Attempt to open the file at `path`, process it, and close it. If file
     cannot be loaded, the default value is returned. Does not swallow errors
