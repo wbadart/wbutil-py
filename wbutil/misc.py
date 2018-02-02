@@ -9,6 +9,8 @@ Will Badart <wbadart@live.com>
 created: JAN 2018
 '''
 
+import signal
+from contextlib import ContextDecorator
 from functools import wraps
 from itertools import count
 from time import sleep
@@ -75,3 +77,40 @@ def retry(
                 raise ValueError('Function application failed')
         return _wrapper
     return _impl
+
+
+class timeout(ContextDecorator):
+    '''
+    Try to execute a block of code, but preempt (raise TimeoutError) if it
+    takes too long.
+
+    >>> from time import sleep
+    >>> @timeout(1)
+    ... def test():
+    ...     sleep(5)
+    ...     print('Done sleeping')
+    ...
+    >>> test()
+    Traceback (most recent call last):
+      File "<string>", line 1, in <module>
+    TimeoutError: Time allotment of 1 seconds expired
+    '''
+
+    def __init__(self, duration=5):
+        super().__init__()
+        self.duration = duration
+        signal.signal(signal.SIGALRM, self._raisetimeout)
+
+    def __enter__(self):
+        '''Start the block and the timer.'''
+        signal.alarm(self.duration)
+
+    def __exit__(self, exception_t=Exception, exception=None, traceback=None):
+        '''Cancel the alarm when block finishes.'''
+        signal.alarm(0)
+
+    def _raisetimeout(self, signum, frame):
+        '''Trap the alarm signal.'''
+        raise TimeoutError(
+            'Time allotment of %d second%s expired'
+            % (self.duration, 's' if self.duration != 1 else ''))
