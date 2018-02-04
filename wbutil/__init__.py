@@ -12,3 +12,6 @@ created: JAN 2018
 from . import func
 from . import fs
 from . import misc
+
+from .fs import *
+from .misc import *
