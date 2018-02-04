@@ -20,6 +20,7 @@ from typing import (
 __all__ = [
     'uniq',
     'retry',
+    'timeout'
 ]
 
 
@@ -93,23 +94,32 @@ class timeout(ContextDecorator):
     >>> test()
     Traceback (most recent call last):
       File "<string>", line 1, in <module>
-    TimeoutError: Time allotment of 1 seconds expired
+    TimeoutError: Time allotment of 1 second expired
+    >>> with timeout(10):
+    ...     sleep(5)
+    ...     print('Waited 5 seconds')
+    ...
+    Waited 5 seconds
     '''
 
-    def __init__(self, duration=5):
-        super().__init__()
+    def __init__(self, duration: int=5) -> None:
         self.duration = duration
         signal.signal(signal.SIGALRM, self._raisetimeout)
 
-    def __enter__(self):
+    def __enter__(self) -> 'timeout':
         '''Start the block and the timer.'''
         signal.alarm(self.duration)
+        return self
 
-    def __exit__(self, exception_t=Exception, exception=None, traceback=None):
+    def __exit__(
+            self,
+            exception_t=Exception,
+            exception=None,
+            traceback=None) -> None:
         '''Cancel the alarm when block finishes.'''
         signal.alarm(0)
 
-    def _raisetimeout(self, signum, frame):
+    def _raisetimeout(self, signum: int, frame: Any) -> None:
         '''Trap the alarm signal.'''
         raise TimeoutError(
             'Time allotment of %d second%s expired'
