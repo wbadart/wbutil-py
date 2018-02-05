@@ -10,4 +10,7 @@ created: FEB 2018
 '''
 
 from . import stat
+from . import naivebayes
+
+from .naivebayes import *
 from .stat import *
