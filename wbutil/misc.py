@@ -75,7 +75,8 @@ def retry(
             if default is not None:
                 return default
             else:
-                raise ValueError('Function application failed')
+                raise ValueError(
+                    'Function application failed after %d attempts' % times)
         return _wrapper
     return _impl
 
