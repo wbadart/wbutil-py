@@ -12,6 +12,10 @@ created: JAN 2018
 from queue import Queue as StdQueue
 from threading import Thread
 
+__all__ = [
+    # 'Queue',
+]
+
 
 class Queue(StdQueue):
     '''

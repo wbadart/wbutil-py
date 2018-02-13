@@ -18,7 +18,7 @@ __all__ = [
     'compose',
     'partialright',
     'starcompose',
-    'smartcompose',
+    # 'smartcompose',
 ]
 
 _UnaryFunc = Callable[[Any], Any]
