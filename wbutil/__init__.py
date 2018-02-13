@@ -13,7 +13,9 @@ from . import func
 from . import fs
 from . import math
 from . import misc
+from . import pipeline
 
 from .fs import *
 from .math import *
 from .misc import *
+from .pipeline import *
