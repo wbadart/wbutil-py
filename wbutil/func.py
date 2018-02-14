@@ -29,6 +29,7 @@ __all__ = [
 
 _UnaryFunc = Callable[[Any], Any]
 _NAryFunc = Callable[[Iterable[Any]], Iterable[Any]]
+_T = TypeVar('_T')
 
 
 class compose(object):
@@ -200,10 +201,7 @@ def lfilter(predicate: Callable[[Any], bool], iterable: Iterable) -> list:
     return list(filter(predicate, iterable))
 
 
-T = TypeVar('T')
-
-
-def identity(e: T) -> T:
+def identity(e: _T) -> _T:
     '''
     Returns the argument untouched. Useful default iteratee.
 
