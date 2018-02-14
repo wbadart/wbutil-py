@@ -12,13 +12,19 @@ created: JAN 2018
 from functools import partial, reduce
 from inspect import signature
 from itertools import chain
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, TypeVar
 
 __all__ = [
     'compose',
     'partialright',
     'starcompose',
     # 'smartcompose',
+    'cmap',
+    'cfilter',
+    'creduce',
+    'lmap',
+    'lfilter',
+    'identity',
 ]
 
 _UnaryFunc = Callable[[Any], Any]
@@ -55,7 +61,7 @@ class compose(object):
 class starcompose(compose):
     '''
     Returns a function of *args that applies the argument functions in
-    order from left to right (first to last). All supplied frunctions must =
+    order from left to right (first to last). All supplied functions must
     return an iterable and accept *args.
 
     >>> switch = lambda a, b: (b, a)
@@ -78,7 +84,7 @@ class smartcompose(compose):
     '''
     WIP
 
-    Represents the composition of a list of functions, appied in order from
+    Represents the composition of a list of functions, applied in order from
     left to right. Uses inspection to determine whether to use a regular or
     unpacked application.
 
@@ -126,3 +132,82 @@ class partialright(partial):
         keywords = self.keywords.copy()
         keywords.update(kwargs)
         return self.func(*pos_args, **keywords)
+
+
+def cmap(iteratee: Callable[[Any], Any]) -> partial:
+    '''
+    Curried map. Sugar for partial(map, iteratee).
+
+    >>> from string import digits
+    >>> transform = cmap(int)
+    >>> list(transform(digits))
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    '''
+    return partial(map, iteratee)
+
+
+def cfilter(predicate: Callable[[Any], bool]) -> partial:
+    '''
+    Curried filter. Sugar for partial(filter, predicate).
+
+    >>> is1or2 = cfilter({1, 2}.__contains__)
+    >>> list(is1or2(range(10)))
+    [1, 2]
+    '''
+    return partial(filter, predicate)
+
+
+def creduce(iteratee: Callable[[Any], Any]) -> partial:
+    '''
+    Curried reduce. Allows sequence to be supplied later.
+
+    >>> from operator import add
+    >>> mysum = creduce(add)
+    >>> mysum(range(10)) == sum(range(10))
+    True
+    >>> from collections import defaultdict
+    >>> def byfirst(obj, e):
+    ...     obj[e[0]].append(e)
+    ...     return obj
+    ...
+    >>> groupbyfirst = creduce(byfirst)
+    >>> groupbyfirst(db.getNames(), defaultdict(list))
+    defaultdict(<class 'list'>, {'A': ['Alice', 'Adam'], 'B': ['Bob']})
+    '''
+    return partial(reduce, iteratee)
+
+
+def lmap(iteratee: Callable[[Any], Any], iterable: Iterable) -> list:
+    '''
+    Performs a mapping of `iteratee' over `iterable' and immediately
+    serializes result into a list.
+
+    >>> lmap(str, range(10))
+    ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    '''
+    return list(map(iteratee, iterable))
+
+
+def lfilter(predicate: Callable[[Any], bool], iterable: Iterable) -> list:
+    '''
+    Filters `iterable' on `predicate', immediately serializing results into a
+    list.
+
+    >>> odd = lambda x: x % 2 == 1
+    >>> lfilter(odd, range(10))
+    [1, 3, 5, 7, 9]
+    '''
+    return list(filter(predicate, iterable))
+
+
+T = TypeVar('T')
+
+
+def identity(e: T) -> T:
+    '''
+    Returns the argument untouched. Useful default iteratee.
+
+    >>> list(map(identity, range(10)))
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    '''
+    return e
