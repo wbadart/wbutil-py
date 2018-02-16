@@ -99,6 +99,17 @@ class Pipeline(object):
         self.shutdown()
         return [self._results[j] for j in range(i + 1)]
 
+    def apply(self, iterable):
+        '''
+        Procedure variant of map. Apply Pipeline.func over iterable, but do not
+        aggregate and return procedure results.
+        '''
+        if not self._started:
+            self.start()
+        for e in iterable:
+            self.put(e)
+        self.shutdown()
+
     @property
     def func(self):
         '''Allow user code to inspect (though not modify) func.'''
