@@ -16,6 +16,7 @@ from . import misc
 from . import pipeline
 
 from .fs import *
+from .func import *
 from .math import *
 from .misc import *
 from .pipeline import *
