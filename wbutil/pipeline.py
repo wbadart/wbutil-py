@@ -12,11 +12,15 @@ created: JAN 2018
 from collections import OrderedDict
 from queue import Queue as StdQueue
 from threading import Event, Lock, Thread
+from typing import Callable, Dict, Hashable, Iterable, List, TypeVar
 from uuid import uuid4
 
 __all__ = [
     'Pipeline',
 ]
+
+_FuncArgT = TypeVar('_FuncArgT')
+_FuncRetT = TypeVar('_FuncRetT')
 
 
 class Pipeline(object):
@@ -25,24 +29,29 @@ class Pipeline(object):
     tailored to processing lists of data.
     '''
 
-    def __init__(self, func, maxsize=0, nthreads=4):
-        self._q = StdQueue(maxsize)
+    def __init__(
+            self,
+            func: Callable[[_FuncArgT], _FuncRetT],
+            maxsize: int=0,
+            nthreads: int=4) -> None:
+
+        self._q: StdQueue = StdQueue(maxsize)
         self._func = func
 
-        self._threads = []
+        self._threads: List[Thread] = []
         for _ in range(nthreads):
             self._threads.append(Thread(target=self._worker))
         self._nthreads = nthreads
 
-        self._results = OrderedDict()
+        self._results: OrderedDict[Hashable, _FuncRetT] = OrderedDict()
         self._result_lock = Lock()
-        self._events = {}
+        self._events: Dict[Hashable, Event] = {}
 
         # Track queue state; enforce one-time usage
         self._started = False
         self._stopped = False
 
-    def _worker(self):
+    def _worker(self) -> None:
         while True:
             key, item, event = self._q.get()
             if key is None:
@@ -54,7 +63,7 @@ class Pipeline(object):
             event.set()
             self._q.task_done()
 
-    def __enter__(self):
+    def __enter__(self) -> 'Pipeline':
         '''Start threads.'''
         if self._started:
             raise RuntimeError('Pipelines cannot be reused')
@@ -63,7 +72,11 @@ class Pipeline(object):
             thread.start()
         return self
 
-    def __exit__(self, exception_t=Exception, exception=None, traceback=None):
+    def __exit__(
+            self,
+            exception_t=Exception,
+            exception=None,
+            traceback=None) -> None:
         '''Stop and join the threads.'''
         for thread in self._threads:
             self._q.put((None, None, None))
@@ -72,23 +85,23 @@ class Pipeline(object):
         self._q.join()
         self._stopped = True
 
-    def put(self, item, key=None):
+    def put(self, item: _FuncArgT, key: Hashable=None) -> Hashable:
         '''Add an item to apply func to.'''
         if self._stopped:
             raise RuntimeError('this Pipeline has already been stopped')
-        if (key, item) != (None, None) and key is None:
+        if key is None and item is not None:
             key = str(uuid4())
         e = Event()
         self._events[key] = e
         self._q.put((key, item, e))
         return key
 
-    def get(self, key, timeout=None):
+    def get(self, key: Hashable, timeout: int=None) -> _FuncRetT:
         '''Get the result from an individual item.'''
         self._events[key].wait(timeout)
         return self._results.get(key)
 
-    def map(self, iterable):
+    def map(self, iterable: Iterable[_FuncArgT]) -> List[_FuncRetT]:
         '''
         Apply Pipeline.func to each item in the argument iterable.
         '''
@@ -99,7 +112,7 @@ class Pipeline(object):
         self.shutdown()
         return [self._results[j] for j in range(i + 1)]
 
-    def apply(self, iterable):
+    def apply(self, iterable: Iterable[_FuncArgT]) -> None:
         '''
         Procedure variant of map. Apply Pipeline.func over iterable, but do not
         aggregate and return procedure results.
@@ -111,7 +124,7 @@ class Pipeline(object):
         self.shutdown()
 
     @property
-    def func(self):
+    def func(self) -> Callable[[_FuncArgT], _FuncRetT]:
         '''Allow user code to inspect (though not modify) func.'''
         return self._func
 
