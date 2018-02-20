@@ -10,7 +10,6 @@ created: JAN 2018
 '''
 
 from functools import partial, reduce
-from inspect import signature
 from itertools import chain
 from typing import Any, Callable, Iterable, TypeVar
 
@@ -18,7 +17,6 @@ __all__ = [
     'compose',
     'partialright',
     'starcompose',
-    # 'smartcompose',
     'cmap',
     'cfilter',
     'creduce',
@@ -79,41 +77,6 @@ class starcompose(compose):
     def __call__(self, *args: Any) -> Any:
         '''Invoke the composed pipeline with unpacking.'''
         return reduce(lambda acc, f: f(*acc), self.funcs, args)
-
-
-class smartcompose(compose):
-    '''
-    WIP
-
-    Represents the composition of a list of functions, applied in order from
-    left to right. Uses inspection to determine whether to use a regular or
-    unpacked application.
-
-    >>>
-    TODO: complete example
-    '''
-
-    # Overridden to annotate support for any function
-    def __init__(self, *funcs: Callable) -> None:
-        super().__init__(*funcs)
-
-    def __call__(self, *args: Any) -> Any:
-        '''
-        Invoke the pipeline, deciding at each step whether to unpack arguments.
-        '''
-        acc = args
-        for f in self.funcs:
-            try:
-                sig = signature(f)
-            except ValueError:
-                continue
-            if len(sig.parameters) == 0:
-                acc = f()
-            elif len(sig.parameters) == 1:
-                acc = f(acc)
-            else:
-                acc = f(*acc)
-        return acc
 
 
 class partialright(partial):
