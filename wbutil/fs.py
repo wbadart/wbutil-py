@@ -9,6 +9,7 @@ Will Badart <wbadart@live.com>
 created: JAN 2018
 '''
 
+from contextlib import closing
 from os.path import exists
 from pickle import dump, load
 from typing import Any, Callable, TextIO
@@ -58,7 +59,13 @@ def tryopen(
     'No description'
     '''
     try:
-        with open(path, 'r') as fs:
-            return process(fs)
-    except OSError:
-        return default
+        fs = open(path)
+    except OSError as e:
+        if default is not None:
+            return default
+        else:
+            msg = ('an error occurred opening {!r}. '
+                   'Provide a non-None argument `default\' to suppress')
+            raise OSError(msg.format(path)) from e
+    with closing(fs):
+        return process(fs)
