@@ -11,33 +11,18 @@ created: JAN 2018
 
 import signal
 from contextlib import ContextDecorator
-from functools import wraps
+from functools import partial, wraps
 from itertools import count
-from time import sleep
+from time import sleep, time
 from typing import (
     Any, Callable, Generator, Iterable, Optional, Tuple, Type, Union)
 
 __all__ = [
-    'uniq',
     'retry',
-    'timeout'
+    'slow',
+    'timeout',
+    'uniq',
 ]
-
-
-def uniq(a: Iterable) -> Generator:
-    '''
-    Generate the argument iterator with the duplicate members removed.
-
-    >>> list(uniq([1, 2, 2, 3]))
-    [1, 2, 3]
-    '''
-    seen: set = set()
-    for e in a:
-        if e not in seen:
-            seen.add(e)
-            yield e
-        else:
-            continue
 
 
 def retry(
@@ -125,3 +110,59 @@ class timeout(ContextDecorator):
         raise TimeoutError(
             'Time allotment of %d second%s expired'
             % (self.duration, 's' if self.duration != 1 else ''))
+
+
+class slow(object):
+    '''
+    Slows the execution of a function. Like a throttle except all calls are
+    eventually executed (in sequence).
+
+    >>> from wbutil import timeout
+    >>> slow_print = slow(print, 1)
+    >>> with timeout(5):
+    ...     for i in range(10):
+    ...         slow_print(i)
+    ...
+    0
+    1
+    2
+    3
+    4
+    Traceback (most recent call last):
+      File "<stdin>", line 3, in <module>
+      File "wbutil/misc.py", line 150, in __call__
+      File "wbutil/misc.py", line 128, in _raisetimeout
+    TimeoutError: Time allotment of 5 seconds expired
+    '''
+
+    def __init__(self, wait: Union[int, float]) -> None:
+        self.wait = wait
+        self.last_call = 0.
+
+    def __call__(self, func: Callable) -> Any:
+        '''
+        '''
+        @wraps(func)
+        def _impl(*args, **kwargs):
+            time_elapsed = time() - self.last_call
+            if time_elapsed < self.wait:
+                sleep(self.wait - time_elapsed)
+            self.last_call = time()
+            return func(*args, **kwargs)
+        return _impl
+
+
+def uniq(a: Iterable) -> Generator:
+    '''
+    Generate the argument iterator with the duplicate members removed.
+
+    >>> list(uniq([1, 2, 2, 3]))
+    [1, 2, 3]
+    '''
+    seen: set = set()
+    for e in a:
+        if e not in seen:
+            seen.add(e)
+            yield e
+        else:
+            continue
