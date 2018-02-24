@@ -170,6 +170,13 @@ class ConfusionMatrix(object):
         '''Corresponds to the number of predictions observed.'''
         return sum(self._c.values())
 
+    def __str__(self) -> str:
+        '''Gives a nice, relatively pretty-printed table of results.'''
+        return (
+            f'Actual \\ Predicted | {self._pos} | self._neg'
+            f'    {self._pos} | {self.TP} | {self.FN}'
+            f'    {self._neg} | {self.FP} | {self.TN}')
+
 
 def mean(a: Sequence[Real]) -> float:
     '''

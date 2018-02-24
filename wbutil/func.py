@@ -9,9 +9,9 @@ Will Badart <wbadart@live.com>
 created: JAN 2018
 '''
 
-from functools import partial, reduce
+from functools import partial, reduce, wraps
 from itertools import chain
-from typing import Any, Callable, Iterable, TypeVar
+from typing import Any, Callable, Generic, Iterable, TypeVar
 
 __all__ = [
     'compose',
@@ -23,14 +23,16 @@ __all__ = [
     'lmap',
     'lfilter',
     'identity',
+    'pred_negate',
 ]
 
-_UnaryFunc = Callable[[Any], Any]
+_ComposeRetT = TypeVar('_ComposeRetT')
 _NAryFunc = Callable[[Iterable[Any]], Iterable[Any]]
+_UnaryFunc = Callable[[Any], Any]
 _T = TypeVar('_T')
 
 
-class compose(object):
+class compose(Generic[_ComposeRetT]):
     '''
     Returns a function which calls the argument functions in order from left
     to right (first to last). Undefined behavior for non-unary functions.
@@ -44,7 +46,7 @@ class compose(object):
     def __init__(self, *funcs: _UnaryFunc) -> None:
         self.funcs = funcs
 
-    def __call__(self, arg: Any) -> Any:
+    def __call__(self, arg: Any) -> _ComposeRetT:
         '''Invoke the composed pipeline with the specified argument.'''
         return reduce(lambda acc, f: f(acc), self.funcs, arg)
 
@@ -172,3 +174,18 @@ def identity(e: _T) -> _T:
     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     '''
     return e
+
+
+def pred_negate(predicate: Callable[..., bool]) -> Callable[..., bool]:
+    '''
+    Gives a function which returns the inverse of the argument predicate.
+
+    >>> isodd = lambda x: x % 2 == 1
+    >>> iseven = pred_negate(isodd)
+    >>> iseven(10)
+    True
+    '''
+    @wraps(predicate)
+    def _impl(*args, **kwargs):
+        return not predicate(*args, **kwargs)
+    return _impl
