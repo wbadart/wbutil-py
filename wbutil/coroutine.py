@@ -9,6 +9,7 @@ Will Badart <wbadart@live.com>
 created: FEB 2018
 '''
 
+from pprint import pprint
 from typing import Callable, Coroutine, Generator
 
 __all__ = [
@@ -40,3 +41,26 @@ def broadcast(*targets: Coroutine) -> Generator:
         item = (yield)
         for target in targets:
             target.send(item)
+
+
+@coroutine
+def printer():
+    '''
+    Sink for printing pipeline items.
+    TODO: complete example
+    '''
+    while True:
+        item = (yield)
+        print(item)
+
+
+@coroutine
+def pprinter():
+    '''
+    Sink for pretty printing pipeline items.
+    TODO: complete example
+    '''
+    while True:
+        item = (yield)
+        pprint(item)
+        print()
