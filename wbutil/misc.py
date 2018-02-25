@@ -13,12 +13,15 @@ import signal
 from contextlib import ContextDecorator
 from functools import wraps
 from itertools import count
+from numbers import Real
+from random import random
 from time import sleep, time
 from typing import (
     Any, Callable, Generator, Iterable, Optional, Tuple, Type, Union)
 
 __all__ = [
     'pair',
+    'randreal',
     'retry',
     'slow',
     'timeout',
@@ -38,6 +41,16 @@ def pair(seq: list, e: Any) -> list:
     else:
         seq[-1] += (e,)
     return seq
+
+
+def randreal(min_: Real, max_: Real) -> Real:
+    '''
+    Generate a pseudo-random number in [min_, max_].
+
+    >>> randreal(10.5, 15.5)
+    12.789728304503505
+    '''
+    return random() * (max_ - min_) + min_
 
 
 def retry(
