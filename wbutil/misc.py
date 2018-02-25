@@ -34,7 +34,7 @@ def coroutine(func: Callable) -> Callable:
     '''
     def _impl(*args, **kwargs):
         routine = func(*args, **kwargs)
-        routine.next()
+        routine.send(None)
         return routine
     return _impl
 
