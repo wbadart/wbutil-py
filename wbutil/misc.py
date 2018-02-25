@@ -18,11 +18,26 @@ from typing import (
     Any, Callable, Generator, Iterable, Optional, Tuple, Type, Union)
 
 __all__ = [
+    'pair',
     'retry',
     'slow',
     'timeout',
     'uniq',
 ]
+
+
+def pair(seq: list, e: Any) -> list:
+    '''
+    For reducing a list to a list of pairs of adjacent elements.
+
+    >>> reduce(pair, range(6), [tuple()])
+    [(0, 1), (2, 3), (4, 5)]
+    '''
+    if len(seq[-1]) == 2:
+        seq.append((e,))
+    else:
+        seq[-1] += (e,)
+    return seq
 
 
 def retry(
