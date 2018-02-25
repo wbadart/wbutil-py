@@ -18,11 +18,25 @@ from typing import (
     Any, Callable, Generator, Iterable, Optional, Tuple, Type, Union)
 
 __all__ = [
+    'coroutine',
     'retry',
     'slow',
     'timeout',
     'uniq',
 ]
+
+
+def coroutine(func: Callable) -> Callable:
+    '''
+    Takes a generator-based coroutine and starts it immediately after
+    construction (so you don't have to remember to prime the coroutine).
+    TODO: complete example
+    '''
+    def _impl(*args, **kwargs):
+        routine = func(*args, **kwargs)
+        routine.next()
+        return routine
+    return _impl
 
 
 def retry(
