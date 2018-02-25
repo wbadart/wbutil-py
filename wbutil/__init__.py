@@ -9,12 +9,14 @@ Will Badart <wbadart@live.com>
 created: JAN 2018
 '''
 
+from . import coroutine
 from . import func
 from . import fs
 from . import math
 from . import misc
 from . import pipeline
 
+from .coroutine import *
 from .fs import *
 from .func import *
 from .math import *
