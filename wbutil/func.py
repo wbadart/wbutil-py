@@ -59,7 +59,7 @@ class autocurry(Generic[_CurryReturnT]):
             self.nparams = len(signature(func).parameters)
         except ValueError:
             func = getattr(func, 'func', func)  # if func is a partial
-            prototype = re.search('[\w_]+(\(.*\))', func.__doc__).groups()[0]
+            prototype = re.search('^[\w_]+(\(.*\))', func.__doc__).groups()[0]
             prototype = prototype[1:-1]
             self.nparams = len(prototype.split(','))
 
