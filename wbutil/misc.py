@@ -23,6 +23,7 @@ __all__ = [
     'pair',
     'randreal',
     'retry',
+    'signal_handler',
     'slow',
     'timeout',
     'uniq',
@@ -91,6 +92,26 @@ def retry(
                 raise ValueError(
                     'Function application failed after %d attempts' % times)
         return _wrapper
+    return _impl
+
+
+def signal_handler(signum: int) -> Callable:
+    '''
+    Registers a function as the handler of signal `signum'.
+
+    >>> import signal as sig; from os import kill, getpid
+    >>> @signal_handler(sig.SIGUSR1)
+    ... def f(signum, frame):
+    ...     print('Got SIGUSR1')
+    ...
+    >>> f(None, None)
+    Got SIGUSR1
+    >>> kill(getpid(), sig.SIGUSR1)
+    Got SIGUSR1
+    '''
+    def _impl(func: Callable[[int, Any], None]) -> Callable[[int, Any], None]:
+        signal.signal(signum, func)
+        return func
     return _impl
 
 
