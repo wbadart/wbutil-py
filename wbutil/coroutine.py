@@ -9,6 +9,7 @@ Will Badart <wbadart@live.com>
 created: FEB 2018
 '''
 
+from functools import wraps
 from pprint import pprint
 from typing import Callable, Coroutine, Generator
 
@@ -28,6 +29,16 @@ def prime_coroutine(func: Callable) -> Callable:
         routine = func(*args, **kwargs)
         routine.send(None)
         return routine
+    return _impl
+
+
+def iteratee_to_coroutine(func: Callable) -> Callable:
+    '''
+    '''
+    @wraps(func)
+    def _impl(target):
+        while True:
+            target.send(func((yield)))
     return _impl
 
 
