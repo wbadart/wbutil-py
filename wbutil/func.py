@@ -9,11 +9,14 @@ Will Badart <wbadart@live.com>
 created: JAN 2018
 '''
 
+import re
 from functools import partial, reduce, wraps
+from inspect import signature
 from itertools import chain
-from typing import Any, Callable, Generic, Iterable, TypeVar
+from typing import Any, Callable, Generic, Iterable, TypeVar, Union
 
 __all__ = [
+    'autocurry',
     'compose',
     'partialright',
     'starcompose',
@@ -27,9 +30,53 @@ __all__ = [
 ]
 
 _ComposeRetT = TypeVar('_ComposeRetT')
+_CurryReturnT = TypeVar('_CurryReturnT')
 _NAryFunc = Callable[[Iterable[Any]], Iterable[Any]]
 _UnaryFunc = Callable[[Any], Any]
 _T = TypeVar('_T')
+
+
+class autocurry(Generic[_CurryReturnT]):
+    '''
+    Wraps a callable which it autocurries. Calling the function with fewer than
+    the total number of parameters yields a partial application, and fulfilling
+    the parameter list yields a complete application. Avoid complications by
+    not applying this to functions of variable parameters.
+
+    >>> from operator import add
+    >>> a = autocurry(add)
+    >>> a(3)(4)
+    7
+    '''
+
+    def __init__(
+            self,
+            func: Callable[..., _CurryReturnT],
+            *args,
+            **kwargs) -> None:
+        self.func = func
+        try:
+            self.nparams = len(signature(func).parameters)
+        except ValueError:
+            func = getattr(func, 'func', func)  # if func is a partial
+            prototype = re.search('[\w_]+(\(.*\))', func.__doc__).groups()[0]
+            prototype = prototype[1:-1]
+            self.nparams = len(prototype.split(','))
+
+        self.args = args
+        self.keywords = kwargs
+
+    def __call__(self, *args, **kwargs) -> Union['autocurry', _CurryReturnT]:
+        '''
+        Partially apply args and kwargs to the wrapped function (full
+        application if all parameters have been filled.
+        '''
+        pos_args = chain(self.args, args)
+        keywords = dict(**self.keywords, **kwargs)
+        if len(self.args + args) == self.nparams:
+            return self.func(*pos_args, **keywords)
+        else:
+            return type(self)(self.func, *pos_args, **keywords)
 
 
 class compose(Generic[_ComposeRetT]):
