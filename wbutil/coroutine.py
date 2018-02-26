@@ -14,11 +14,11 @@ from typing import Callable, Coroutine, Generator
 
 __all__ = [
     'broadcast',
-    'coroutine',
+    'prime_coroutine',
 ]
 
 
-def coroutine(func: Callable) -> Callable:
+def prime_coroutine(func: Callable) -> Callable:
     '''
     Takes a generator-based coroutine and starts it immediately after
     construction (so you don't have to remember to prime the coroutine).
@@ -31,7 +31,7 @@ def coroutine(func: Callable) -> Callable:
     return _impl
 
 
-@coroutine
+@prime_coroutine
 def broadcast(*targets: Coroutine) -> Generator:
     '''
     Send an item to multiple target coroutines.
@@ -43,7 +43,7 @@ def broadcast(*targets: Coroutine) -> Generator:
             target.send(item)
 
 
-@coroutine
+@prime_coroutine
 def printer():
     '''
     Sink for printing pipeline items.
@@ -54,7 +54,7 @@ def printer():
         print(item)
 
 
-@coroutine
+@prime_coroutine
 def pprinter():
     '''
     Sink for pretty printing pipeline items.
