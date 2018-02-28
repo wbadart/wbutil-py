@@ -83,7 +83,7 @@ class PersistentDict(dict):
     exception is thrown in processing.
 
     Serialization protocol is JSON by default, but you can use any encoding
-    that sends a dictionary to a string (e.g. YAML, pickle e).
+    that sends a dictionary to a string (e.g. YAML, pickle).
     '''
 
     def __init__(
