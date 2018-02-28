@@ -19,6 +19,7 @@ from typing import Any, Callable, TextIO, Union
 __all__ = [
     'saveobj',
     'tryopen',
+    'PersistentDict',
 ]
 
 
@@ -82,7 +83,7 @@ class PersistentDict(dict):
     exception is thrown in processing.
 
     Serialization protocol is JSON by default, but you can use any encoding
-    sends a dictionary to a string (e.g. YAML, picke).
+    that sends a dictionary to a string (e.g. YAML, pickle e).
     '''
 
     def __init__(
