@@ -10,9 +10,11 @@ created: JAN 2018
 '''
 
 from contextlib import closing
+from json import dumps, loads
+from os import PathLike
 from os.path import exists
 from pickle import dump, load
-from typing import Any, Callable, TextIO
+from typing import Any, Callable, TextIO, Union
 
 __all__ = [
     'saveobj',
@@ -69,3 +71,78 @@ def tryopen(
             raise OSError(msg.format(path)) from e
     with closing(fs):
         return process(fs)
+
+
+class PersistentDict(dict):
+    '''
+    A dict subclass, objects of which are directly linked to a file. That is to
+    say, it provides methods for loading and saving self to and from a file.
+
+    Provides a context manager interface so that data will be saved even if an
+    exception is thrown in processing.
+
+    Serialization protocol is JSON by default, but you can use any encoding
+    sends a dictionary to a string (e.g. YAML, picke).
+    '''
+
+    def __init__(
+            self,
+            *args: Any,
+            path: Union[str, PathLike]=None,
+            encode: Callable[[dict], str]=dumps,
+            usebytes: bool=False) -> None:
+        '''
+        Initialize like an ordinary dictionary, but provide the keyword-only
+        arguments `path' (the file liked to this object) and `encode' (the
+        function which serializes this object into a string to write to disk,
+        defaults to `json.dumps').
+
+        Set the `usebytes' flag in the constructor if your protocol expects
+        bytes objects rather than strings.
+
+        Assumes `path' is fresh. Use classmethod `from_file' to start with data
+        loaded.
+        '''
+        if path is None:
+            raise ValueError('cannot use PersistentDict without a save path')
+        super().__init__(*args)
+        self.path = path
+        self.encode = encode
+        self.mode = 'b' if usebytes else ''
+
+    def __enter__(self) -> 'PersistentDict':
+        return self
+
+    def __exit__(
+            self,
+            exception_t=Exception,
+            exception=None,
+            traceback=None) -> None:
+        '''
+        Save the object when context is exited (throw away return value).
+        '''
+        self.save()
+
+    def save(self) -> int:
+        '''
+        Write self's data to disk. Returns the result of `file.write' (total
+        bytes written to disk).
+        '''
+        with open(self.path, 'w' + self.mode) as fs:
+            return fs.write(self.encode(self))
+
+    @classmethod
+    def from_file(
+            cls,
+            path: Union[str, PathLike],
+            encode: Callable[[dict], str]=dumps,
+            decode: Callable[[str], dict]=loads,
+            usebytes: bool=False) -> 'PersistentDict':
+        '''
+        Instantiate a PersistentDict from an existing data file. Arguments
+        follow the same semantics as PersistentDict.__init__, and `decode'
+        should be the inverse of `encode'.
+        '''
+        with open(path, 'rb' if usebytes else 'r') as fs:
+            obj = decode(fs.read())
+        return cls(obj, path=path, encode=encode, usebytes=usebytes)
