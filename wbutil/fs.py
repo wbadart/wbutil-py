@@ -101,7 +101,7 @@ class PersistentDict(dict):
         Set the `usebytes' flag in the constructor if your protocol expects
         bytes objects rather than strings.
 
-        Assumes `path' is fresh. Use classmethod `from_file' to start with data
+        Assumes `path' is fresh. Use classmethod `from_path' to start with data
         loaded.
         '''
         if path is None:
@@ -133,7 +133,7 @@ class PersistentDict(dict):
             return fs.write(self.encode(self))
 
     @classmethod
-    def from_file(
+    def from_path(
             cls,
             path: Union[str, PathLike],
             encode: Callable[[dict], str]=dumps,
