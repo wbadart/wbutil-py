@@ -173,8 +173,8 @@ class ConfusionMatrix(object):
     def __str__(self) -> str:
         '''Gives a nice, relatively pretty-printed table of results.'''
         return (
-            f'Actual \\ Predicted | {self._pos} | self._neg'
-            f'    {self._pos} | {self.TP} | {self.FN}'
+            f'Actual \\ Predicted | {self._pos} | {self._neg}\n'
+            f'    {self._pos} | {self.TP} | {self.FN}\n'
             f'    {self._neg} | {self.FP} | {self.TN}')
 
 
