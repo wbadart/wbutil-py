@@ -85,7 +85,7 @@ class compose(Generic[_ComposeRetT]):
     to right (first to last). Undefined behavior for non-unary functions.
 
     >>> from functools import partial; from operator import mul
-    >>> times2tostr = compse(partial(mul, 2), str)
+    >>> times2tostr = compose(partial(mul, 2), str)
     >>> times2tostr(10)
     '20'
     '''
@@ -135,7 +135,7 @@ class partialright(partial):
     >>> data = [1, 2, 3, 4]
     >>> process_data = partialright(map, data)
     >>> stringified = process_data(str)
-    >>> stringified
+    >>> list(stringified)
     ['1', '2', '3', '4']
     '''
 
